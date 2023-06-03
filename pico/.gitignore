@@ -1,0 +1,8 @@
+# Ignore installation directories
+pico-examples
+pico-sdk
+
+# Ignore temporary and auto-generated directories
+.vscode
+workspace/build
+

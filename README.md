@@ -69,13 +69,20 @@ export PICO_SDK_PATH=/home/laurent/Projects/lgantel/ble_sofa/pico/pico-sdk
 cd pico/workspace
 mkdir build
 cd build
-cmake ..
 ```
 
 ## LED Control
 
 ```bash
+cmake ..
 make -j4 led_control
+```
+
+## BLE Control
+
+```bash
+cmake -DPICO_BOARD=pico_w ..
+make -j4 ble_control
 ```
 
 # Resources

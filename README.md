@@ -54,7 +54,30 @@ sudo apt update
 sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential libstdc++-arm-none-eabi-newlib
 ```
 
+In the bashrc file, export the path to the SDK:
+```bash
 #
+# RPi Pico SDK
+#
+export PICO_SDK_PATH=/home/laurent/Projects/lgantel/ble_sofa/pico/pico-sdk
+```
+
+
+# Example Projects
+
+```bash
+cd pico/workspace
+mkdir build
+cd build
+cmake ..
+```
+
+## LED Control
+
+```bash
+make -j4 led_control
+```
+
 # Resources
 
 * Raspberry Pi Pico power pins information:

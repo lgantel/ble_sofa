@@ -194,6 +194,47 @@ static void nordic_can_send(void *some_context) {
 //----------------------------------------------------------------------------------
 
 /**
+ * @brief Attribute Protocol (ATT) Packet Handler
+ */
+static void att_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+  UNUSED(channel);
+  UNUSED(size);
+    
+  if (packet_type != HCI_EVENT_PACKET) return;
+
+  int mtu;
+  nordic_spp_le_streamer_connection_t * context;
+
+  switch (hci_event_packet_get_type(packet)) {
+    case ATT_EVENT_CONNECTED:
+      // Setup new connection
+      context = connection_for_conn_handle(HCI_CON_HANDLE_INVALID);
+      if (!context) break;
+      context->counter = 'A';
+      context->test_data_len = ATT_DEFAULT_MTU - 4;
+      context->connection_handle = att_event_connected_get_handle(packet);
+      break;
+    case ATT_EVENT_MTU_EXCHANGE_COMPLETE:
+      mtu = att_event_mtu_exchange_complete_get_MTU(packet) - 3;
+      context = connection_for_conn_handle(att_event_mtu_exchange_complete_get_handle(packet));
+      if (!context) { break; }
+      context->test_data_len = btstack_min(mtu - 3, sizeof(context->test_data));
+      printf("%c: ATT MTU = %u => use test data of len %u\n", context->name, mtu, context->test_data_len);
+      break;
+    case ATT_EVENT_DISCONNECTED:
+      context = connection_for_conn_handle(att_event_disconnected_get_handle(packet));
+      if (!context) break;
+      // Free connection
+      printf("%c: Disconnect\n", context->name);                    
+      context->le_notification_enabled = 0;
+      context->connection_handle = HCI_CON_HANDLE_INVALID;
+      break;
+    default:
+      break;
+  }
+}
+
+/**
  * @brief Host Controller Interface (HCI) Packet Handler
  */
 static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
@@ -321,6 +362,7 @@ int main()
   // Initialize Attribute Protocol
   att_server_init(profile_data, NULL, NULL);
   nordic_spp_service_server_init(&nordic_spp_packet_handler);
+  att_server_register_packet_handler(att_packet_handler);
 
   // TODO: To comment
   uint16_t adv_int_min = 0x0030;

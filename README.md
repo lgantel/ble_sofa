@@ -93,6 +93,13 @@ https://dronebotworkshop.com/pi-pico/
 * A nice development kit PCB example for Raspberry Pi Pico:
 https://01001000.xyz/2021-02-13-Raspberry-Pi-Pico-dev-board-Kiwikit/
 
+* C library for LCD OLED:
+https://github.com/martinkooij/pi-pico-ss-oled
 
-* An introduction to Bluetooth BLE:
+* Information on the debug probes:
+https://www.framboise314.fr/tout-nouveau-la-sonde-de-debogage-raspberry-pi-debug-probe/
+
+* Bluetooth BLE resources:
 http://tvaira.free.fr/bts-sn/activites/activite-ble/bluetooth-ble.html#gatt-et-att
+https://novelbits.io/bluetooth-gatt-services-characteristics/
+https://www.jaredwolff.com/get-started-with-bluetooth-low-energy/

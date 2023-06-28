@@ -85,21 +85,77 @@ cmake -DPICO_BOARD=pico_w ..
 make -j4 ble_control
 ```
 
+## Test on Linux
+
+Scan of the available BLE devices:
+```bash
+sudo hcitool lescan
+LE Scan ...
+43:43:A2:12:1F:AC ble-control
+```
+
+Connection in interactive mode to the BLE Control device:
+```bash
+sudo gatttool -b 43:43:A2:12:1F:AC -I
+[43:43:A2:12:1F:AC][LE]> connect
+Attempting to connect to 43:43:A2:12:1F:AC
+Connection successful
+```
+
+Read the primary services provided by the BLE Control device. Our custom service has the UUID 0000ff10-0000-1000-8000-00805f9b34fb. It defines a characteristic that can be written to control the LED state (UUID 0000ff11-0000-1000-8000-00805f9b34fb):
+```bash
+> primary
+attr handle: 0x0001, end grp handle: 0x0003 uuid: 00001800-0000-1000-8000-00805f9b34fb  <-- Generic Access Profile
+attr handle: 0x0004, end grp handle: 0x0006 uuid: 0000ff10-0000-1000-8000-00805f9b34fb  <-- Our control service
+> char-desc 0x0001
+handle: 0x0001, uuid: 00002800-0000-1000-8000-00805f9b34fb  <-- Primary service
+handle: 0x0002, uuid: 00002803-0000-1000-8000-00805f9b34fb  <-- Characteristic information
+handle: 0x0003, uuid: 00002a00-0000-1000-8000-00805f9b34fb  <-- Generic Access service (name)
+handle: 0x0004, uuid: 00002800-0000-1000-8000-00805f9b34fb  <-- Primary service
+handle: 0x0005, uuid: 00002803-0000-1000-8000-00805f9b34fb  <-- Characteristic information
+handle: 0x0006, uuid: 0000ff11-0000-1000-8000-00805f9b34fb  <-- LED control custom characteristic
+```
+
+The value of the characteristic can be read with the char-read-hnd command:
+```bash
+char-read-hnd 0x0006
+Characteristic value/descriptor: 00
+```
+
+The characteristic being a write-without-response characteristic, we use the char-write-cmd command to write on it:
+```bash
+# Set the LED on
+char-write-cmd 0x0006 01
+# Set the LED off
+char-write-cmd 0x0006 00
+```
+
 # Resources
 
+## Raspberry Pi Pico
+
 * Raspberry Pi Pico power pins information:
+
 https://dronebotworkshop.com/pi-pico/
 
 * A nice development kit PCB example for Raspberry Pi Pico:
+
 https://01001000.xyz/2021-02-13-Raspberry-Pi-Pico-dev-board-Kiwikit/
 
 * C library for LCD OLED:
+
 https://github.com/martinkooij/pi-pico-ss-oled
 
 * Information on the debug probes:
+
 https://www.framboise314.fr/tout-nouveau-la-sonde-de-debogage-raspberry-pi-debug-probe/
 
+## Bluetooth Low Energy
+
 * Bluetooth BLE resources:
+
 http://tvaira.free.fr/bts-sn/activites/activite-ble/bluetooth-ble.html#gatt-et-att
+
 https://novelbits.io/bluetooth-gatt-services-characteristics/
+
 https://www.jaredwolff.com/get-started-with-bluetooth-low-energy/

@@ -33,6 +33,29 @@ A replacement solution has been specified to allow the user to control the sofa 
   <img src="./images/dual_pirelay_pico.jpg" alt="Dual PiRelay for RPi Pico" width="20%" height="8%" title="Dual PiRelay for RPi Pico">
 </p>
 
+## Pico Dual Channel Relay HAT
+
+Information about the relay hat can be found here:
+
+[https://learn.sb-components.co.uk/Pico-Dual-Channel-Relay-Hat]
+
+and there:
+
+[https://github.com/sbcshop/Pico-dual-channel-Relay-HAT]
+
+Issue with relays:
+
+[https://electronics.stackexchange.com/questions/631931/ac-current-on-relay-causes-pi-pico-to-reboot-continuously]
+
+[https://forums.raspberrypi.com/viewtopic.php?t=322133]
+
+[https://forums.raspberrypi.com/viewtopic.php?t=64595]
+
+[https://forums.raspberrypi.com/viewtopic.php?f=91&t=83372&p=1225448#p1225448]
+
+Circuit for 29v to 5v converter:
+
+[https://electronics.stackexchange.com/questions/588770/logic-level-converter-from-29v-to-5v-schematic]
 
 # Tools Setup
 

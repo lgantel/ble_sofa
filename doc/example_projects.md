@@ -2,7 +2,16 @@
 
 ## LED Control
 
-<img src="../images/example_projects/led_control_diagram.png" alt="LED Control Diagram" width="50%" height="15%" title="LED Control Diagram">
+### Block Diagram
+
+<img src="../images/example_projects/led_control_diagram.png" alt="LED Control Diagram" width="50%" height="10%" title="LED Control Diagram">
+
+### Description
+
+- LED_Toggle is controlled via GP2 and is toggled every 500 ms.
+- LED_Control is controlled via GP3 and its status is dependent of the state of the S1 button. In our case, the S1 button is active-low.
+
+### Compilation
 
 ```bash
 cmake ..
@@ -11,10 +20,22 @@ make -j4 led_control
 
 ## BLE Control
 
+### Block Diagram
+
+<img src="../images/example_projects/ble_control_diagram.png" alt="BLE Control Diagram" width="50%" height="10%" title="BLE Control Diagram">
+
+### Description
+
+In this example project, the BLE stack is activated and a GATT profile is provided by the Raspberry Pi Pico.
+
+### Compilation
+
 ```bash
 cmake -DPICO_BOARD=pico_w ..
 make -j4 ble_control
 ```
+
+### Test
 
 1. Test detection on Linux
 

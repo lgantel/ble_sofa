@@ -105,3 +105,6 @@ http://tvaira.free.fr/bts-sn/activites/activite-ble/bluetooth-ble.html#gatt-et-a
 https://novelbits.io/bluetooth-gatt-services-characteristics/
 
 https://www.jaredwolff.com/get-started-with-bluetooth-low-energy/
+
+https://punchthrough.com/android-ble-guide/
+

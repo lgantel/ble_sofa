@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">ble_control</string>
+    <string name="scan_header">Scan BLE Devices</string>
+    <string name="start_scan">Start Scan</string>
+    <string name="stop_scan">Stop Scan</string>
+    <string name="connected">State: Connected</string>
+    <string name="disconnected">State: Disconnected</string>
+    <string name="led_on">Turn LED ON</string>
+    <string name="led_off">Turn LED OFF</string>
+</resources>

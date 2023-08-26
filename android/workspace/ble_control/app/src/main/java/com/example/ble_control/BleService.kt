@@ -1,3 +1,24 @@
+/*--------------------------------------------------------------------------------
+--                          _               _       _
+--                         | |__ _ __ _ _ _| |_ ___| |
+--                         | / _` / _` | ' \  _/ -_) |
+--                         |_\__, \__,_|_||_\__\___|_|
+--                           |___/
+--
+----------------------------------------------------------------------------------
+--
+-- Company: LGANTEL
+-- Engineer: Laurent Gantel <laurent.gantel@gmail.com>
+--
+-- Project Name: BLE Control
+-- Version: 0.1.0
+-- File Name: BleService.tk
+-- Description: Class used to manage BLE operations
+--
+-- Last update: 2023-08-26
+--
+-------------------------------------------------------------------------------*/
+
 package com.example.ble_control
 
 import android.app.Service
@@ -223,11 +244,17 @@ class BleService : Service() {
     }
 
     companion object {
+        /** @brief Debug TAG */
         private const val TAG = "BleService"
+        /** @brief Broadcast message: indicate a new connection to a GATT server */
         const val ACTION_GATT_CONNECTED = "com.example.ble_control.ACTION_GATT_CONNECTED"
+        /** @brief Broadcast message: indicate a disconnection from a GATT server */
         const val ACTION_GATT_DISCONNECTED = "com.example.ble_control.ACTION_GATT_DISCONNECTED"
+        /** @brief Broadcast message: request BLE runtime permissions */
         const val ACTION_REQUIRE_PERMISSIONS = "com.example.ble_control.ACTION_REQUIRE_PERMISSIONS"
+        /** @brief  Enum for internal connection state - disconnected */
         const val STATE_DISCONNECTED = 0
+        /** @brief  Enum for internal connection state - connected */
         const val STATE_CONNECTED = 2
     }
 }

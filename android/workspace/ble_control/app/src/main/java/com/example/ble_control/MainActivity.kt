@@ -1,3 +1,23 @@
+/*--------------------------------------------------------------------------------
+--                          _               _       _
+--                         | |__ _ __ _ _ _| |_ ___| |
+--                         | / _` / _` | ' \  _/ -_) |
+--                         |_\__, \__,_|_||_\__\___|_|
+--                           |___/
+--
+----------------------------------------------------------------------------------
+--
+-- Company: LGANTEL
+-- Engineer: Laurent Gantel <laurent.gantel@gmail.com>
+--
+-- Project Name: BLE Control
+-- Version: 0.1.0
+-- File Name: MainActivity.tk
+-- Description: Main activity
+--
+-- Last update: 2023-08-26
+--
+-------------------------------------------------------------------------------*/
 package com.example.ble_control
 
 import android.bluetooth.BluetoothGattCharacteristic
@@ -42,6 +62,10 @@ class MainActivity : ComponentActivity() {
 
     // BLE permissions manager
     private var blePermission : BlePermissions = BlePermissions()
+
+    //--------------------------------
+    // Activity life cycle
+    //--------------------------------
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,6 +154,45 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Register the GATT update receiver to communicate with the BLE service
+        registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter())
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Unregister the GATT update receiver
+        unregisterReceiver(gattUpdateReceiver)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        Log.d("console", "onRequestPermissionResult")
+        when (requestCode) {
+            BlePermissions.REQUEST_PERMISSION_CODE -> {
+                Log.d(TAG, "grantResults.isNotEmpty() = ${grantResults.isNotEmpty()}")
+                Log.d(TAG, "grantResults[0] = ${grantResults[0]}")
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "Permission granted: Start scanning")
+                    bleScanner.startScan()
+                }
+            }
+        }
+    }
+
+    //--------------------------------
+    // UI management
+    //--------------------------------
+
+    /**
+     * @brief Method to be called by the BLE scanner to update the list of the scanned devices
+     */
     fun notifyDeviceListUpdate() {
         // Check BLE permissions
         if (!blePermission.checkBlePermission(this)) {
@@ -145,18 +208,17 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Setup the LED state using the dedicated GATT service
+     * @brief Update the textview indicating the connection state
+     * @param connectionState A string indicating the new connection state
      */
-    private fun writeLEDState(payload: ByteArray) {
-        // Primary service
-        val ledServiceUUID = UUID.fromString("0000ff10-0000-1000-8000-00805f9b34fb")
-        // GATT characteristic
-        val ledStateCharUUID = UUID.fromString("0000ff11-0000-1000-8000-00805f9b34fb")
-        // Write without response
-        val writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-
-        bleService?.writeCharacteristics(ledServiceUUID, ledStateCharUUID, writeType, payload)
+    private fun updateConnectionState(connectionState : Int) {
+        val textView = findViewById<TextView>(R.id.connectionState)
+        textView.setText(connectionState)
     }
+
+    //--------------------------------
+    // BLE Service management
+    //--------------------------------
 
     /**
      * @brief Code to manage Service lifecycle
@@ -182,31 +244,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun updateConnectionState(connectionState : Int) {
-        val textView = findViewById<TextView>(R.id.connectionState)
-        textView.setText(connectionState)
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        Log.d("console", "onRequestPermissionResult")
-        when (requestCode) {
-            BlePermissions.REQUEST_PERMISSION_CODE -> {
-                Log.d(TAG, "grantResults.isNotEmpty() = ${grantResults.isNotEmpty()}")
-                Log.d(TAG, "grantResults[0] = ${grantResults[0]}")
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "Permission granted: Start scanning")
-                    bleScanner.startScan()
-                }
-            }
-        }
-    }
-
+    /**
+     * @brief Broadcast communication with the BLE service
+     */
     private val gattUpdateReceiver : BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
@@ -225,6 +265,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * @brief Intent filter for broadcast communication with the BLE service
+     */
     private fun makeGattUpdateIntentFilter() : IntentFilter? {
         return IntentFilter().apply {
             addAction(BleService.ACTION_GATT_CONNECTED)
@@ -232,17 +275,26 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter())
-    }
+    //--------------------------------
+    // BLE control operations
+    //--------------------------------
 
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(gattUpdateReceiver)
+    /**
+     * Setup the LED state using the dedicated GATT service
+     */
+    private fun writeLEDState(payload: ByteArray) {
+        // Primary service
+        val ledServiceUUID = UUID.fromString("0000ff10-0000-1000-8000-00805f9b34fb")
+        // GATT characteristic
+        val ledStateCharUUID = UUID.fromString("0000ff11-0000-1000-8000-00805f9b34fb")
+        // Write without response
+        val writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+
+        bleService?.writeCharacteristics(ledServiceUUID, ledStateCharUUID, writeType, payload)
     }
 
     companion object {
+        /** @brief Debug TAG */
         private const val TAG = "MainActivity"
     }
 }

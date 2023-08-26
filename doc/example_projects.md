@@ -82,6 +82,10 @@ char-write-cmd 0x0006 01
 char-write-cmd 0x0006 00
 ```
 
+### Android Application
+
+An Android application has been developped to test the BLE Control example via a smartphone. The application is available in android/workspace/ble_control/.
+
 ## Relay Control
 
 ### Pico Dual Channel Relay HAT

@@ -33,7 +33,6 @@ A replacement solution has been specified to allow the user to control the sofa 
   <img src="./images/dual_pirelay_pico.jpg" alt="Dual PiRelay for RPi Pico" width="20%" height="8%" title="Dual PiRelay for RPi Pico">
 </p>
 
-
 # Tools Setup
 
 ## Get the SDK and examples
@@ -69,20 +68,43 @@ export PICO_SDK_PATH=/home/laurent/Projects/lgantel/ble_sofa/pico/pico-sdk
 cd pico/workspace
 mkdir build
 cd build
-cmake ..
 ```
 
-## LED Control
+The following examples can be built:
 
-```bash
-make -j4 led_control
-```
+- [LED Control](doc/example_projects.md#led-control)
+- [BLE Control](doc/example_projects.md#ble-control)
+- [Relay Control](doc/example_projects.md#relay-control)
 
 # Resources
 
+## Raspberry Pi Pico
+
 * Raspberry Pi Pico power pins information:
+
 https://dronebotworkshop.com/pi-pico/
 
 * A nice development kit PCB example for Raspberry Pi Pico:
+
 https://01001000.xyz/2021-02-13-Raspberry-Pi-Pico-dev-board-Kiwikit/
+
+* C library for LCD OLED:
+
+https://github.com/martinkooij/pi-pico-ss-oled
+
+* Information on the debug probes:
+
+https://www.framboise314.fr/tout-nouveau-la-sonde-de-debogage-raspberry-pi-debug-probe/
+
+## Bluetooth Low Energy
+
+* Bluetooth BLE resources:
+
+http://tvaira.free.fr/bts-sn/activites/activite-ble/bluetooth-ble.html#gatt-et-att
+
+https://novelbits.io/bluetooth-gatt-services-characteristics/
+
+https://www.jaredwolff.com/get-started-with-bluetooth-low-energy/
+
+https://punchthrough.com/android-ble-guide/
 

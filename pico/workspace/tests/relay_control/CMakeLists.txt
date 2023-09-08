@@ -8,7 +8,7 @@ add_executable(relay_control
 target_link_libraries(relay_control pico_stdlib)
 
 # Enable usb output, disable uart output
-pico_enable_stdio_usb(relay_control 1)
+pico_enable_stdio_usb(relay_control 0)
 pico_enable_stdio_uart(relay_control 0)
 
 # Create map/bin/hex file etc.

@@ -88,7 +88,27 @@ An Android application has been developped to test the BLE Control example via a
 
 ## Relay Control
 
-### Pico Dual Channel Relay HAT
+### Block Diagram
+
+<img src="../images/example_projects/relay_control_diagram.png" alt="Relay Control Diagram" width="75%" height="8%" title="Relay Control Diagram">
+
+### Description
+
+In this example project, the Raspberry Pi Pico controls the relay 1 of the Dual Pi Relay Hat via the GPIO 6. 
+- The relay is connected to a 12V DC fan
+- The relay is turned on during 5 seconds
+- The relay is then turned off for 3 seconds
+
+### Compilation
+
+```bash
+cmake -DPICO_BOARD=pico_w ..
+make -j4 relay_control
+```
+
+### References
+
+- Pico Dual Channel Relay Hat
 
 Information about the relay hat can be found here:
 
@@ -98,7 +118,7 @@ and there:
 
 [https://github.com/sbcshop/Pico-dual-channel-Relay-HAT]
 
-### Known Issues with Relays:
+- Known Issues with Relays:
 
 [https://electronics.stackexchange.com/questions/631931/ac-current-on-relay-causes-pi-pico-to-reboot-continuously]
 
@@ -108,6 +128,6 @@ and there:
 
 [https://forums.raspberrypi.com/viewtopic.php?f=91&t=83372&p=1225448#p1225448]
 
-### Circuit for 29v to 5v converter:
+- Circuit for 29v to 5v converter:
 
 [https://electronics.stackexchange.com/questions/588770/logic-level-converter-from-29v-to-5v-schematic]

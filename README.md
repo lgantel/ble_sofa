@@ -76,6 +76,10 @@ The following examples can be built:
 - [BLE Control](doc/example_projects.md#ble-control)
 - [Relay Control](doc/example_projects.md#relay-control)
 
+# BLE Sofa Application
+
+- [BLE Sofa Application Documentation](doc/ble_sofa_app.md#ble_sofa_app)
+
 # Resources
 
 ## Raspberry Pi Pico

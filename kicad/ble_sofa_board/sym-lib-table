@@ -1,0 +1,5 @@
+(sym_lib_table
+  (lib (name "Raspberry_Pi_Pico_W_SC0918")(type "KiCad")(uri "/home/laurent/Projects/lgantel/ble_sofa/kicad/libraries/Raspberry_Pi_Pico_W_Kicad_Files/Raspberry_Pi_Pico_W_SC0918.kicad_sym")(options "")(descr "Raspberry Pi Pico W"))
+  (lib (name "SB_Components")(type "KiCad")(uri "/home/laurent/Projects/lgantel/ble_sofa/kicad/libraries/SB_Components/SB_Components.kicad_sym")(options "")(descr "SB Components boards symbols"))
+  (lib (name "AZ_Delivery")(type "KiCad")(uri "/home/laurent/Projects/lgantel/ble_sofa/kicad/libraries/AZ_Delivery/AZ_Delivery.kicad_sym")(options "")(descr "AZ Delivery modules symbols"))
+)

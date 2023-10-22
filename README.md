@@ -100,6 +100,10 @@ https://github.com/martinkooij/pi-pico-ss-oled
 
 https://www.framboise314.fr/tout-nouveau-la-sonde-de-debogage-raspberry-pi-debug-probe/
 
+* Kicad symbol and footprint models:
+
+https://github.com/bdubs-astro/Raspberry_Pi_Pico_W_Kicad_Files
+
 ## Bluetooth Low Energy
 
 * Bluetooth BLE resources:

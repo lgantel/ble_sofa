@@ -1,5 +1,6 @@
 if (NOT PICO_NO_HARDWARE)
     add_subdirectory(led_control)
     add_subdirectory(ble_control)
+    add_subdirectory(relay_control)
     add_subdirectory(read_ina219)
 endif ()

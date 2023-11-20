@@ -33,4 +33,6 @@ add_compile_options(-Wall
 
 # Hardware-specific examples in subdirectories:
 add_subdirectory(tests)
+# BLE Sofa Application
+add_subdirectory(ble_sofa_app)
 

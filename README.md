@@ -76,6 +76,10 @@ The following examples can be built:
 - [BLE Control](doc/example_projects.md#ble-control)
 - [Relay Control](doc/example_projects.md#relay-control)
 
+# BLE Sofa Application
+
+- [BLE Sofa Application Documentation](doc/ble_sofa_app.md#ble_sofa_app)
+
 # Resources
 
 ## Raspberry Pi Pico
@@ -95,6 +99,10 @@ https://github.com/martinkooij/pi-pico-ss-oled
 * Information on the debug probes:
 
 https://www.framboise314.fr/tout-nouveau-la-sonde-de-debogage-raspberry-pi-debug-probe/
+
+* Kicad symbol and footprint models:
+
+https://github.com/bdubs-astro/Raspberry_Pi_Pico_W_Kicad_Files
 
 ## Bluetooth Low Energy
 

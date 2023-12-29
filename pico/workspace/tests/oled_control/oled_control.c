@@ -15,7 +15,7 @@
 -- File Name: oled_control.c
 -- Description: Control of the 128×32 I2C OLED LCD Display including SSD1306 chip
 --
--- Last update: 2023-12-28
+-- Last update: 2023-12-29
 --
 -------------------------------------------------------------------------------*/
 
@@ -25,6 +25,8 @@
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
+
+#include "ascii_bitmap.h"
 
 //----------------------------------------------------------------
 // Constants
@@ -176,20 +178,32 @@ int oled_clear_screen(i2c_inst_t *i2c, const uint addr) {
 }
 
 int oled_poweron_init(i2c_inst_t *i2c, const uint addr) {
-    // Wait for at least 100ms for reset to complete -> 1000ms
-    sleep_ms(1000);
+    // Wait for at least 1ms for reset to complete -> 2ms
+    sleep_ms(2);
 
     // Set Display Off
     oled_write_byte(i2c, addr, OLED_CMD_DISPLAYOFF, I2C_CMD);
+    // Wait for at least 2*3us for reset to operate -> 6ms to be sure 
+    sleep_ms(6);
+
+    // Charge pump and Pre-Charge period
+    oled_write_byte(i2c, addr, OLED_SET_CHARGE_PUMP, I2C_CMD);
+    oled_write_byte(i2c, addr, 0x14, I2C_CMD);
+    oled_write_byte(i2c, addr, 0xD9, I2C_CMD);
+    oled_write_byte(i2c, addr, 0xF1, I2C_CMD);
+
+    // Wait for 100 ms for VBAT stabilization
+    sleep_ms(100);
+
     // Set memory address
     oled_write_byte(i2c, addr, OLED_CMD_DISPLAYOFF, I2C_CMD);
     oled_write_byte(i2c, addr, 0x00, I2C_CMD);
     // Set resolution and layout
-    oled_write_byte(i2c, addr, OLED_SET_DISP_START_LINE, I2C_CMD);
+    oled_write_byte(i2c, addr, OLED_SET_DISP_START_LINE | 0x00, I2C_CMD);
     oled_write_byte(i2c, addr, OLED_SET_SEG_REMAP | 0x01, I2C_CMD); // Map column 127 to SEG0
     oled_write_byte(i2c, addr, OLED_SET_MUX_RATIO, I2C_CMD);
     oled_write_byte(i2c, addr, 31, I2C_CMD);    // Height - 1
-    oled_write_byte(i2c, addr, OLED_SET_COM_OUT_DIR, I2C_CMD);
+    oled_write_byte(i2c, addr, OLED_SET_COM_OUT_DIR | 0x08, I2C_CMD);
     oled_write_byte(i2c, addr, OLED_SET_DISP_OFFSET, I2C_CMD);
     oled_write_byte(i2c, addr, 0x00, I2C_CMD);
     oled_write_byte(i2c, addr, OLED_SET_COM_PIN_CFG, I2C_CMD);
@@ -208,18 +222,6 @@ int oled_poweron_init(i2c_inst_t *i2c, const uint addr) {
     oled_write_byte(i2c, addr, OLED_SET_NORM_INV, I2C_CMD);
     oled_write_byte(i2c, addr, OLED_SET_IREF_SELECT, I2C_CMD);
     oled_write_byte(i2c, addr, 0x30, I2C_CMD);  // Enable internal IREF during display on
-    // Charge pump
-    oled_write_byte(i2c, addr, OLED_SET_CHARGE_PUMP, I2C_CMD);
-    oled_write_byte(i2c, addr, 0x14, I2C_CMD);
-    
-    // DISCARDED: Send the commands to invert the display for on-board OLED or upside down for PmodOLED.
-    // uncomment/comment the next 6 lines if you are using the OLED display right side up
-    /*oled_write_byte(i2c, addr, OLED_DISP_CONTRAST1, I2C_CMD);
-    oled_write_byte(i2c, addr, OLED_DISP_CONTRAST2, I2C_CMD);
-    oled_write_byte(i2c, addr, OLED_SET_SEG_REMAP, I2C_CMD);
-    oled_write_byte(i2c, addr, OLED_SET_SCAN_DIR, I2C_CMD);
-    oled_write_byte(i2c, addr, OLED_SET_LOWER_COL_ADDR, I2C_CMD);
-    oled_write_byte(i2c, addr, OLED_LOWER_COL_ADDR, I2C_CMD);*/
 
     // Send Display On command
     oled_write_byte(i2c, addr, OLED_CMD_DISPLAYON, I2C_CMD);
@@ -248,7 +250,7 @@ int oled_poweroff(i2c_inst_t *i2c, const uint addr) {
  * @file oled_control.c
  * @name oled_set_pixel
  */
-int oled_set_pixel(i2c_inst_t *i2c, const uint addr, uint32_t row, uint32_t col, uint16_t val) {
+int oled_set_pixel(uint32_t row, uint32_t col, uint16_t val) {
   int page = row / 8;
   uint8_t col_content = gddram[col + page*OLED_NB_DISPLAY_COL];
   int pixel_pos = row - 8*page;
@@ -257,6 +259,51 @@ int oled_set_pixel(i2c_inst_t *i2c, const uint addr, uint32_t row, uint32_t col,
   else { col_content &= ~(0x01 << pixel_pos);	}
 
   gddram[col + page*OLED_NB_DISPLAY_COL] = col_content;
+
+  return 0;
+}
+
+/**
+ * @file oled_control.c
+ * @name oled_set_pagecol
+ */
+int oled_set_pagecol(uint32_t page, uint32_t col, uint8_t col_content) {
+  if ((page > OLED_NB_DISPLAY_PAGE) || (col > OLED_NB_DISPLAY_COL)) {
+	  return -1;
+  }
+
+  gddram[col + page*OLED_NB_DISPLAY_COL] = col_content;
+  return 0;
+}
+
+/**
+ * @file oled_control.c
+ * @name oled_write_letter
+ */
+int oled_write_letter(int8_t letter, unsigned int page, unsigned int col) {
+  int status;
+
+  bitmap_char_t ascii_letter = ascii_bitmap_lut[letter];
+  for (int i=0; i<8; i++) {
+	status = oled_set_pagecol(page, col+i, ascii_letter.col[i]);
+	if (status != 0) { return status; }
+  }
+
+  return 0;
+}
+
+/**
+ * @file oled_control.c
+ * @name oled_write_str
+ */
+int oled_write_str(i2c_inst_t *i2c, const uint addr, const char * str, unsigned int page) {
+	if ((str == NULL) || (page > OLED_NB_DISPLAY_PAGE)) { return -1; }
+
+  for (int i=0; i<OLED_NB_DISPLAY_COL/8; i++) {
+	if (str[i] == '\0') { break; }
+	oled_write_letter(str[i], page, i*8);
+  }
+  oled_write_buffer(i2c, addr);
 
   return 0;
 }
@@ -293,9 +340,10 @@ int main(void)
     oled_poweron(i2c, SSD1306_I2C_ADDR);
     gpio_put(LED_GPIO, true);
 
-    oled_set_pixel(i2c, SSD1306_I2C_ADDR, 0, 20, 0x01);
-    // Write the buffer into the graphic memory
-	oled_write_buffer(i2c, SSD1306_I2C_ADDR);
+    oled_write_str(i2c, SSD1306_I2C_ADDR, "ABCDEFGHIJKLMNOP", 0);
+    oled_write_str(i2c, SSD1306_I2C_ADDR, "QRSTUVWXYZ012345", 1);
+    oled_write_str(i2c, SSD1306_I2C_ADDR, "6789abcdefghijkl", 2);
+    oled_write_str(i2c, SSD1306_I2C_ADDR, "mnopqrstuvwxyz\0", 3);
 
     sleep_ms(5000);
 

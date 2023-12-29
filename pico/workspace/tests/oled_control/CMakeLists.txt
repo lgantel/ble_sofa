@@ -14,6 +14,7 @@ pico_sdk_init()
 
 # Define the executable
 add_executable(${PROJECT}
+  ascii_bitmap.h 
   ${PROJECT}.c
 )
 

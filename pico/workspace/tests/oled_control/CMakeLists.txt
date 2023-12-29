@@ -20,6 +20,7 @@ add_executable(${PROJECT}
 # Pull in dependencies
 target_link_libraries(${PROJECT}
   pico_stdlib
+  hardware_i2c
 )
 
 # Add include files

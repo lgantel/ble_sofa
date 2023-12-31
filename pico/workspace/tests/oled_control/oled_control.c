@@ -26,7 +26,7 @@
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
 
-#include "ascii_bitmap.h"
+#include "ssd1306.h"
 
 //----------------------------------------------------------------
 // Constants
@@ -148,20 +148,20 @@ int oled_clear_buffer(void) {
  */
 int oled_write_buffer(i2c_inst_t *i2c, const uint addr) {
   for (int ipag = 0; ipag < OLED_NB_DISPLAY_PAGE; ipag++) {
-	// Set the page address
-	oled_write_byte(i2c, addr, 0x22, I2C_CMD);
+	  // Set the page address
+	  oled_write_byte(i2c, addr, 0x22, I2C_CMD);
     oled_write_byte(i2c, addr, ipag, I2C_CMD);
 
-	// Start at the left column
-	// - Lower nibble of column start address: 0x0<4 bits nibble>
+	  // Start at the left column
+	  // - Lower nibble of column start address: 0x0<4 bits nibble>
     oled_write_byte(i2c, addr, 0x00, I2C_CMD);
-	// - Higher nibble of column start address: 0x1<4 bits nibble>
+	  // - Higher nibble of column start address: 0x1<4 bits nibble>
     oled_write_byte(i2c, addr, 0x10, I2C_CMD);
 
-	// Copy this memory page of display data (horizontal increment)
-	for (int col = 0; col < OLED_NB_DISPLAY_COL; col++) {
+	  // Copy this memory page of display data (horizontal increment)
+	  for (int col = 0; col < OLED_NB_DISPLAY_COL; col++) {
       oled_write_byte(i2c, addr, gddram[col + ipag*OLED_NB_DISPLAY_COL], I2C_DATA);
-	}
+	  }
   }
 
   return 0;

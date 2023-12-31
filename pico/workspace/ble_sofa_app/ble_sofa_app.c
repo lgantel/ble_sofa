@@ -37,9 +37,13 @@
 //----------------------------------------------------------------
 
 #define WL_LED_GPIO  0
+#define LED_GPIO        2
 
 #define RELAY1_GPIO   6
 #define RELAY2_GPIO   7
+
+#define OLED_SDA_GPIO    16
+#define OLED_SCL_GPIO    17
 
 // Global variables
 

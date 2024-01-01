@@ -15,6 +15,7 @@ pico_sdk_init()
 # Define the executable
 add_executable(${PROJECT}
   ascii_bitmap.h 
+  ssd1306.h ssd1306.c 
   ${PROJECT}.c
 )
 

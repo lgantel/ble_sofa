@@ -31,6 +31,9 @@ add_compile_options(-Wall
         -Wno-maybe-uninitialized
         )
 
+# Libraries
+# - SSD1306 OLED screen
+add_subdirectory(lib/ssd1306)
 # Hardware-specific examples in subdirectories:
 add_subdirectory(tests)
 # BLE Sofa Application

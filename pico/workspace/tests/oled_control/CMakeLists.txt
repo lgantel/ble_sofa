@@ -14,15 +14,14 @@ pico_sdk_init()
 
 # Define the executable
 add_executable(${PROJECT}
-  ascii_bitmap.h 
-  ssd1306.h ssd1306.c 
   ${PROJECT}.c
 )
 
 # Pull in dependencies
+include_directories(${CMAKE_SOURCE_DIR}/lib/ssd1306/inc)
 target_link_libraries(${PROJECT}
   pico_stdlib
-  hardware_i2c
+  ssd1306
 )
 
 # Add include files

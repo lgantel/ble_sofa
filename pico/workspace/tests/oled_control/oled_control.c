@@ -15,7 +15,7 @@
 -- File Name: oled_control.c
 -- Description: Control of the 128×32 I2C OLED LCD Display including SSD1306 chip
 --
--- Last update: 2024-01-01
+-- Last update: 2024-01-13
 --
 -------------------------------------------------------------------------------*/
 
@@ -33,9 +33,6 @@
 #define LED_GPIO        2
 #define I2C_SDA_GPIO    16
 #define I2C_SCL_GPIO    17
-
-#define I2C_CMD         0x00
-#define I2C_DATA        0x01
 
 // SSD1306 I2C 7-bit address
 #define SSD1306_I2C_ADDR 0x3C

@@ -13,7 +13,9 @@ set(CMAKE_BUILD_TYPE Release)
 pico_sdk_init()
 
 # Define the executable
-add_executable(${PROJECT} ${PROJECT}.c)
+add_executable(${PROJECT} 
+  ${PROJECT}.c
+)
 
 # Pull in common dependencies
 target_link_libraries(${PROJECT}  

@@ -15,7 +15,7 @@
 -- File Name: ble_sofa_app.c
 -- Description: Control of two relays via BLE to turn on/off two 12V DC fans
 --
--- Last update: 2023-09-24
+-- Last update: 2024-01-13
 --
 -------------------------------------------------------------------------------*/
 
@@ -31,19 +31,23 @@
 #include "mygatt.h"
 
 #include "relay.h"
+#include "ssd1306.h"
 
 //----------------------------------------------------------------
 // Constants
 //----------------------------------------------------------------
 
-#define WL_LED_GPIO  0
-#define LED_GPIO        2
+#define WL_LED_GPIO       0
+#define LED_GPIO          2
 
-#define RELAY1_GPIO   6
-#define RELAY2_GPIO   7
+#define RELAY1_GPIO       6
+#define RELAY2_GPIO       7
 
-#define OLED_SDA_GPIO    16
-#define OLED_SCL_GPIO    17
+#define I2C_SDA_GPIO      16
+#define I2C_SCL_GPIO      17
+
+// SSD1306 I2C 7-bit address
+#define SSD1306_I2C_ADDR  0x3C
 
 // Global variables
 
@@ -52,6 +56,9 @@ relay_t relay1;
 
 /** @brief Structure to control Relay2 */
 relay_t relay2;
+
+/** @brief Structure to control SSD1306 OLED display */
+ssd1306_t ssd1306;
 
 //----------------------------------------------------------------------------------
 // Bluetooth variables
@@ -245,6 +252,15 @@ int main(void)
     // Turn off relay 2
     relay_off(&relay2);
 
+    // Initialize the OLED display
+    ssd1306_i2c_init(&ssd1306, 
+      i2c0, 
+      SSD1306_I2C_ADDR, 
+      100 * 1000, // 100 kHz
+      I2C_SCL_GPIO,
+      I2C_SDA_GPIO
+    );
+
     // Wait a moment
     sleep_ms(2000);
 
@@ -287,8 +303,14 @@ int main(void)
     // Turn on the LED to indicate that BLE is fully initialized
     cyw43_arch_gpio_put(WL_LED_GPIO, true);
 
+    // Power-on OLED display
+    ssd1306_poweron(&ssd1306);
+
     // Endless loop
     btstack_run_loop_execute();
+
+    // Power-off OLED display
+    ssd1306_poweroff(&ssd1306);
 
     return 0;
 }

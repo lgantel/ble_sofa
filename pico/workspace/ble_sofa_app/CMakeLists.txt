@@ -15,15 +15,19 @@ pico_sdk_init()
 # Define the executable
 add_executable(${PROJECT} 
   ${PROJECT}.c 
-  relay.h relay.c 
 )
 
 # Pull in dependencies
+include_directories(${CMAKE_SOURCE_DIR}/lib/relay/inc)
+include_directories(${CMAKE_SOURCE_DIR}/lib/ssd1306/inc)
+
 target_link_libraries(${PROJECT}  
   pico_stdlib
   pico_btstack_ble
   pico_btstack_cyw43
   pico_cyw43_arch_none
+  relay
+  ssd1306
 )
 
 # Add include files

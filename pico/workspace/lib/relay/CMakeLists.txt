@@ -1,19 +1,17 @@
-set(PROJECT ssd1306)
+set(PROJECT relay)
 
 # Create library
 add_library(${PROJECT} INTERFACE)
 
 # List sources
 target_sources(${PROJECT} INTERFACE 
-  ${CMAKE_CURRENT_SOURCE_DIR}/inc/ascii_bitmap.h 
-  ${CMAKE_CURRENT_SOURCE_DIR}/inc/ssd1306.h 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ssd1306.c 
+  ${CMAKE_CURRENT_SOURCE_DIR}/inc/relay.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/relay.c 
 )
 
 # Pull in dependencies
 target_link_libraries(${PROJECT} INTERFACE 
-  pico_stdlib
-  hardware_i2c
+  hardware_gpio
 )
 
 # Add include files

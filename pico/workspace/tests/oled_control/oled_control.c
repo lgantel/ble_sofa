@@ -15,7 +15,7 @@
 -- File Name: oled_control.c
 -- Description: Control of the 128×32 I2C OLED LCD Display including SSD1306 chip
 --
--- Last update: 2024-01-13
+-- Last update: 2024-01-14
 --
 -------------------------------------------------------------------------------*/
 
@@ -73,6 +73,8 @@ int main(void)
     );
 
     gpio_put(LED_GPIO, true);
+
+    // Power-on OLED display
     ssd1306_poweron(&ssd1306);
     sleep_ms(1000);
 

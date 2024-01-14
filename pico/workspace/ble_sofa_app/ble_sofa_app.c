@@ -15,7 +15,7 @@
 -- File Name: ble_sofa_app.c
 -- Description: Control of two relays via BLE to turn on/off two 12V DC fans
 --
--- Last update: 2024-01-13
+-- Last update: 2024-01-14
 --
 -------------------------------------------------------------------------------*/
 
@@ -110,7 +110,7 @@ static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *p
   UNUSED(channel);
   UNUSED(size);
 
-  uint16_t conn_interval;
+  //uint16_t conn_interval;
   hci_con_handle_t con_handle;
 
   if (packet_type != HCI_EVENT_PACKET) { return; }
@@ -119,7 +119,7 @@ static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *p
     case BTSTACK_EVENT_STATE:
       // BTstack activated, get started
       if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING) {
-        printf("> BLE Control - BTstack activated\n");
+        //printf("> BLE Control - BTstack activated\n");
       }
       break;
     case HCI_EVENT_LE_META:
@@ -127,21 +127,21 @@ static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *p
         case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
           // Print connection parameters (without using float operations)
           con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
-          conn_interval = hci_subevent_le_connection_complete_get_conn_interval(packet);
-          printf("LE Connection - Connection Interval: %u.%02u ms\n", conn_interval * 125 / 100, 25 * (conn_interval & 3));
-          printf("LE Connection - Connection Latency: %u\n", hci_subevent_le_connection_complete_get_conn_latency(packet));
+          //conn_interval = hci_subevent_le_connection_complete_get_conn_interval(packet);
+          //printf("LE Connection - Connection Interval: %u.%02u ms\n", conn_interval * 125 / 100, 25 * (conn_interval & 3));
+          //printf("LE Connection - Connection Latency: %u\n", hci_subevent_le_connection_complete_get_conn_latency(packet));
 
           // Request min con_interval 15ms for iOS 11+
-          printf("LE Connection - Request 15 ms connection interval\n");
+          //printf("LE Connection - Request 15 ms connection interval\n");
           gap_request_connection_parameter_update(con_handle, 12, 12, 0, 0x0048);
           break;
         case HCI_SUBEVENT_LE_CONNECTION_UPDATE_COMPLETE:
           // Print connection parameters (without using floating point operations)
           con_handle    = hci_subevent_le_connection_update_complete_get_connection_handle(packet);
-          conn_interval = hci_subevent_le_connection_update_complete_get_conn_interval(packet);
-          printf("LE Connection - Connection Param update - connection interval %u.%02u ms, latency %u\n", 
-                    conn_interval * 125 / 100,
-                    25 * (conn_interval & 3), hci_subevent_le_connection_update_complete_get_conn_latency(packet));
+          //conn_interval = hci_subevent_le_connection_update_complete_get_conn_interval(packet);
+          //printf("LE Connection - Connection Param update - connection interval %u.%02u ms, latency %u\n", 
+          //          conn_interval * 125 / 100,
+          //          25 * (conn_interval & 3), hci_subevent_le_connection_update_complete_get_conn_latency(packet));
           break;
         default:
           break;
@@ -200,9 +200,23 @@ static int att_write_callback(hci_con_handle_t connection_handle, uint16_t att_h
 
     // Process data
     // - Bit [0] is used to set Relay1 on/off
-    if (data & 0x01) { relay_on(&relay1); } else { relay_off(&relay1); }
+    if (data & 0x01) { 
+      ssd1306_write_str(&ssd1306, "-- Relay 1 ON   ", 1);
+      ssd1306_write_str(&ssd1306, "-- Relay 2 OFF  ", 2);
+      relay_on(&relay1);
+      relay_off(&relay2);
     // - Bit [1] is used to set Relay2 on/off
-    if (data & 0x02) { relay_on(&relay2); } else { relay_off(&relay2); }
+    } else if (data & 0x02) { 
+      ssd1306_write_str(&ssd1306, "-- Relay 1 OFF  ", 1);
+      ssd1306_write_str(&ssd1306, "-- Relay 2 ON   ", 2);
+      relay_off(&relay1);
+      relay_on(&relay2);
+    } else { 
+      ssd1306_write_str(&ssd1306, "-- Relay 1 OFF  ", 1);
+      ssd1306_write_str(&ssd1306, "-- Relay 2 OFF  ", 2);
+      relay_off(&relay1);
+      relay_off(&relay2);
+    }
     
     return 0;
 }
@@ -223,10 +237,14 @@ static void att_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *p
 
   switch (hci_event_packet_get_type(packet)) {
     case ATT_EVENT_CONNECTED:
-      printf("Connected\n");
+      ssd1306_write_str(&ssd1306, "-- Connected    ", 1);
+      ssd1306_write_str(&ssd1306, "                ", 2);
+      //printf("Connected\n");
       break;
     case ATT_EVENT_DISCONNECTED:
-      printf("Disconnected\n");
+      ssd1306_write_str(&ssd1306, "-- Disconnected ", 1);
+      ssd1306_write_str(&ssd1306, "                ", 2);
+      //printf("Disconnected\n");
       break;
     default:
       break;
@@ -261,8 +279,12 @@ int main(void)
       I2C_SDA_GPIO
     );
 
+    // Power-on OLED display
+    ssd1306_poweron(&ssd1306);
+    ssd1306_write_str(&ssd1306, "--  Power-On  --", 1);
+
     // Wait a moment
-    sleep_ms(2000);
+    sleep_ms(1000);
 
     // Initialize the Bluetooth stack
     if (cyw43_arch_init()) return -1;
@@ -303,8 +325,7 @@ int main(void)
     // Turn on the LED to indicate that BLE is fully initialized
     cyw43_arch_gpio_put(WL_LED_GPIO, true);
 
-    // Power-on OLED display
-    ssd1306_poweron(&ssd1306);
+    ssd1306_write_str(&ssd1306, "--Bluetooth On--", 1);
 
     // Endless loop
     btstack_run_loop_execute();

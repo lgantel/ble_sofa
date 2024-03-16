@@ -155,4 +155,9 @@
   (pad "38" thru_hole roundrect (at 8.89 -19) (size 1.6 1.6) (drill 1) (layers "*.Cu" "*.Mask") (roundrect_rratio 0.125) (tstamp cf386a39-fc62-49dd-8ec5-e044f6bd67ce))
   (pad "39" thru_hole circle (at 8.89 -21.54) (size 1.6 1.6) (drill 1) (layers "*.Cu" "*.Mask") (tstamp 2dc54bac-8640-4dd7-b8ed-3c7acb01a8ea))
   (pad "40" thru_hole circle (at 8.89 -24.08) (size 1.6 1.6) (drill 1) (layers "*.Cu" "*.Mask") (tstamp eae0ab9f-65b2-44d3-aba7-873c3227fba7))
+  (model "/home/laurent/Projects/lgantel/ble_sofa/kicad/3d_models/pico_dual_channel_relay_hat/Pico_Dual_Channel_Relay_HAT.step"
+    (offset (xyz 0 28 8))
+    (scale (xyz 1 1 1))
+    (rotate (xyz 0 0 0))
+  )
 )

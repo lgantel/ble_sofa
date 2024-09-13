@@ -44,7 +44,7 @@
   (pad "3" thru_hole circle (at 30.48 15.494) (size 2.54 2.54) (drill 0.762) (layers "*.Cu" "*.Mask") (tstamp b9a756bb-790b-421e-8597-fa8238c43c42))
   (pad "4" thru_hole circle (at -30.48 15.494) (size 2.54 2.54) (drill 0.762) (layers "*.Cu" "*.Mask") (tstamp c2d44311-7b20-4569-8678-ca0e96668149))
   (model "/home/laurent/Projects/lgantel/ble_sofa/kicad/3d_models/lm2596-buck-converter/LM2596 Buck Converter 4.0-40 to 1.3-37V.STEP"
-    (offset (xyz 0.1 0 0))
+    (offset (xyz 0.1 0 6))
     (scale (xyz 1 1 1))
     (rotate (xyz -90 0 0))
   )

@@ -98,6 +98,21 @@ In this example, three tasks are defined:
 - An at time worker task: this thread print a message every 10 seconds
 - The blink task: this thread makes the BLE LED blink every 500 ms
 
+### Setup
+
+For reference only, the FreeRTOS kernel is added as a submodule:
+
+```bash
+cd pico/workspace
+git submodule add https://github.com/FreeRTOS/FreeRTOS-Kernel.git freertos
+cd freertos
+git submodule update --init
+```
+
+### RTOS Configuration
+
+The configuration of the FreeRTOS kernel is done in the application. The include file `FreeRTOSConfig.h` can be found in the **freertos_app/inc** directory.
+
 ---
 ## OLED Control
 

@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
 
 # Pull in SDK (must be before project)
-include(pico_sdk_import.cmake)
+set(PICO_SDK_PATH $ENV{PICO_SDK_PATH})
+include(${PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
 include(pico_extras_import_optional.cmake)
+
+# Pull in FreeRTOS
+set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_LIST_DIR}/freertos)
+include(FreeRTOS_Kernel_import.cmake)
 
 project(workspace C CXX ASM)
 set(CMAKE_C_STANDARD 11)
@@ -19,11 +24,6 @@ set(PICO_EXAMPLES_PATH ${PROJECT_SOURCE_DIR})
 pico_sdk_init()
 
 include(example_auto_set_url.cmake)
-# Add blink example
-#add_subdirectory(blink)
-
-# Add hello world example
-#add_subdirectory(hello_world)
 
 add_compile_options(-Wall
         -Wno-format          # int != int32_t as far as the compiler is concerned because gcc has int32_t as long int
@@ -35,8 +35,7 @@ add_compile_options(-Wall
 # - SSD1306 OLED screen
 add_subdirectory(lib/relay)
 add_subdirectory(lib/ssd1306)
-# Hardware-specific examples in subdirectories:
+# Specific examples in subdirectories:
 add_subdirectory(tests)
 # BLE Sofa Application
 add_subdirectory(ble_sofa_app)
-

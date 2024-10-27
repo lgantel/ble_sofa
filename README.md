@@ -48,12 +48,15 @@ git clone https://github.com/raspberrypi/pico-examples.git --branch master
 
 ## Install the toolchain
 
+1. Install dependencies:
+
 ```bash
 sudo apt update
-sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential libstdc++-arm-none-eabi-newlib
+sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential libstdc++-arm-none-eabi-newlib pkg-config libusb-1.0-0-dev
 ```
 
-In the bashrc file, export the path to the SDK:
+2. In the bashrc file, export the path to the SDK:
+
 ```bash
 #
 # RPi Pico SDK
@@ -61,6 +64,16 @@ In the bashrc file, export the path to the SDK:
 export PICO_SDK_PATH=/home/laurent/Projects/lgantel/ble_sofa/pico/pico-sdk
 ```
 
+3. To complete the installation, install `picotool` which is used to generate the UF2 binaries for the Raspberry Pi Pico:
+
+```bash
+git clone https://github.com/raspberrypi/picotool.git
+cd picotool
+mkdir build && cd build
+cmake ..
+make
+sudo make install
+```
 
 # Example Projects
 
@@ -74,6 +87,7 @@ The following examples can be built:
 
 - [LED Control](doc/example_projects.md#led-control)
 - [BLE Control](doc/example_projects.md#ble-control)
+- [FreeRTOS App](doc/example_projects.md#freertos-app)
 - [Relay Control](doc/example_projects.md#relay-control)
 
 # BLE Sofa Application

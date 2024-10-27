@@ -1,5 +1,6 @@
 # Example Projects
 
+---
 ## LED Control
 
 ### Block Diagram
@@ -18,6 +19,7 @@ cmake ..
 make -j4 led_control
 ```
 
+---
 ## BLE Control
 
 ### Block Diagram
@@ -86,6 +88,35 @@ char-write-cmd 0x0006 00
 
 An Android application has been developped to test the BLE Control example via a smartphone. The application is available in android/workspace/ble_control/.
 
+---
+## FreeRTOS App
+
+### Description
+
+In this example, three tasks are defined:
+- The main task: this thread creates the two others tasks and print a message every 3 seconds
+- An at time worker task: this thread print a message every 10 seconds
+- The blink task: this thread makes the BLE LED blink every 500 ms
+
+---
+## OLED Control
+
+### Block Diagram
+
+- [ ] TODO: Add schema for block diagram
+
+### Description
+
+This application initialize the SSD1306 OLED display and print a serie of letters and numbers on the 4 lines of the screen.
+
+```bash
+ABCDEFGHIJKLMNOP
+QRSTUVWXYZ012345
+6789abcdefghijkl
+mnopqrstuvwxyz
+```
+
+---
 ## Relay Control
 
 ### Block Diagram

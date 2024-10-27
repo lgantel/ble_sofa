@@ -1,7 +1,8 @@
 set(PROJECT ble_control)
 
-# Initialize the SDK
-include("${PICO_SDK_PATH}/external/pico_sdk_import.cmake")
+# Pull in SDK (must be before project)
+set(PICO_SDK_PATH $ENV{PICO_SDK_PATH})
+include(${PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
 project(${PROJECT} C CXX ASM)
 set(CMAKE_C_STANDARD 11)

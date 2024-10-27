@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 
-# initialize the SDK based on PICO_SDK_PATH
-# note: this must happen before project()
-include(../../pico_sdk_import.cmake)
+# Pull in SDK (must be before project)
+set(PICO_SDK_PATH $ENV{PICO_SDK_PATH})
+include(${PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
 project(led_control)
 

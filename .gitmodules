@@ -1,0 +1,3 @@
+[submodule "pico/workspace/freertos"]
+	path = pico/workspace/freertos
+	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git

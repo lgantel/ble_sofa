@@ -1,5 +1,13 @@
 # Example Projects
 
+Project compilation must be done from the top level directory:
+
+```bash
+cd pico/workspace
+mkdir build
+cd build
+```
+
 ---
 ## LED Control
 
@@ -15,7 +23,7 @@
 ### Compilation
 
 ```bash
-cmake ..
+cmake .. -DPICO_BOARD=pico_w
 make -j4 led_control
 ```
 

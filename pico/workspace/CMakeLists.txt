@@ -32,8 +32,9 @@ add_compile_options(-Wall
         )
 
 # Libraries
-# - SSD1306 OLED screen
+# - Relays HAT
 add_subdirectory(lib/relay)
+# - SSD1306 OLED screen
 add_subdirectory(lib/ssd1306)
 # Specific examples in subdirectories:
 add_subdirectory(tests)

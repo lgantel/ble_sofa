@@ -4,5 +4,6 @@ pico-sdk
 
 # Ignore temporary and auto-generated directories
 .vscode
+build
 workspace/build
 

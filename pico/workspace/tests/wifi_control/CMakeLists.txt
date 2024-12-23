@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.20)
+
 set(PROJECT wifi_control)
 
 # Pull in SDK (must be before project)
@@ -17,6 +19,9 @@ pico_sdk_init()
 add_executable(${PROJECT} 
   ${PROJECT}.c
 )
+
+# Set link flags
+set_property(TARGET ${PROJECT} APPEND_STRING PROPERTY LINK_FLAGS "-Wl,--print-memory-usage")
 
 # Pull in common dependencies
 target_link_libraries(${PROJECT}

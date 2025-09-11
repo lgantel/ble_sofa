@@ -90,6 +90,29 @@ The following examples can be built:
 - [FreeRTOS App](doc/example_projects.md#freertos-app)
 - [Relay Control](doc/example_projects.md#relay-control)
 
+# Firmware loading via OpenOCD
+
+1. Install OpenOCD:
+
+```bash
+sudo apt-get install pkg-config libjim-dev
+git clone https://github.com/raspberrypi/openocd.git
+cd openocd
+git submodule update --init --recursive
+./bootstrap
+./configure --enable-picoprobe --enable-sysfsgpio --enable-bcm2835gpio
+make -j8
+sudo make install
+```
+
+2. Connect a USB cable to the Rasperry Pi Pico
+
+3. Program Flash and verify:
+
+```bash
+./openocd_launch.sh
+```
+
 # BLE Sofa Application
 
 - [BLE Sofa Application Documentation](doc/ble_sofa_app.md#ble_sofa_app)

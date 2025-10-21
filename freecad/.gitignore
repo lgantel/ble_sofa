@@ -2,4 +2,5 @@
 */*.FCStd1
 */*.stl
 */*.FCBak
-*/*.gcode
+ble-sofa-board-lid/*.gcode
+ble-sofa-board-box/*.gcode

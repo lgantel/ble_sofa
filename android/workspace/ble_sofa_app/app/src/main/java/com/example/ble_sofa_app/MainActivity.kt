@@ -32,6 +32,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
@@ -93,10 +94,10 @@ class MainActivity : ComponentActivity() {
 
         arrayAdapter = ArrayAdapter(this, R.layout.bledevicelist_item, deviceList)
 
-        var listView: ListView = findViewById<ListView>(R.id.bleDevicesList)
+        val listView: ListView = findViewById<ListView>(R.id.bleDevicesList)
         listView.adapter = arrayAdapter
         listView.onItemClickListener =
-            OnItemClickListener { parent, view, position, id ->
+            OnItemClickListener { _, view, position, _ ->
                 // Get the device address
                 val itemValue = listView.getItemAtPosition(position) as String
                 val pattern = Regex("(?<=\\().+?(?=\\))")
@@ -124,12 +125,12 @@ class MainActivity : ComponentActivity() {
             }
 
         // Create the BLE Scanner instance
-        bleScanner = BleScanner(this, Handler())
+        bleScanner = BleScanner(this, Handler(Looper.getMainLooper()))
 
         // Get the BLE service intent for communication
         val gattServiceIntent = Intent(this, BleService::class.java)
         // Bind with the service
-        if (bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE)) {
+        if (bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE)) {
             Log.d(TAG, "GATT service bound")
         }
         else {
@@ -137,9 +138,9 @@ class MainActivity : ComponentActivity() {
         }
 
         // Define and setup buttons to control the relays
-        val relay1Button = findViewById<Button>(R.id.relay1Btn);
+        val relay1Button = findViewById<Button>(R.id.relay1Btn)
         updateButtonState(relay1Button, false, R.string.relay1_on)
-        val relay2Button = findViewById<Button>(R.id.relay2Btn);
+        val relay2Button = findViewById<Button>(R.id.relay2Btn)
         updateButtonState(relay2Button, false, R.string.relay2_on)
 
         relay1Button.setOnClickListener {
@@ -182,7 +183,12 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // Register the GATT update receiver to communicate with the BLE service
-        registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter())
+        androidx.core.content.ContextCompat.registerReceiver(
+            this,
+            gattUpdateReceiver,
+            makeGattUpdateIntentFilter(),
+            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     override fun onPause() {
@@ -268,7 +274,7 @@ class MainActivity : ComponentActivity() {
             bleService = (service as BleService.LocalBinder).getService()
             bleService?.let { bluetooth ->
                 // Initialize the service
-                if (!bluetooth.initialize()) {
+                if (!bluetooth.initialize(this@MainActivity)) {
                     Log.e(TAG, "Unable to initialize Bluetooth")
                 }
                 // Perform device connection
@@ -305,11 +311,9 @@ class MainActivity : ComponentActivity() {
     /**
      * @brief Intent filter for broadcast communication with the BLE service
      */
-    private fun makeGattUpdateIntentFilter() : IntentFilter? {
-        return IntentFilter().apply {
-            addAction(BleService.ACTION_GATT_CONNECTED)
-            addAction(BleService.ACTION_GATT_DISCONNECTED)
-        }
+    private fun makeGattUpdateIntentFilter() = IntentFilter().apply {
+        addAction(BleService.ACTION_GATT_CONNECTED)
+        addAction(BleService.ACTION_GATT_DISCONNECTED)
     }
 
     //--------------------------------

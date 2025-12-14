@@ -153,3 +153,10 @@ https://www.jaredwolff.com/get-started-with-bluetooth-low-energy/
 
 https://punchthrough.com/android-ble-guide/
 
+https://mcuoneclipse.com/2023/03/19/ble-with-wifi-and-freertos-on-raspberry-pi-pico-w/
+
+## Flash Storage
+
+* Tutorial on how to modify linker script to reserve a flash memory block for persistent storage:
+
+https://community.element14.com/products/raspberry-pi/b/blog/posts/raspberry-pico-c-sdk-reserve-a-flash-memory-block-for-persistent-storage

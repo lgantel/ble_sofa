@@ -41,7 +41,7 @@ In this example project, the BLE stack is activated and a GATT profile is provid
 ### Compilation
 
 ```bash
-cmake -DPICO_BOARD=pico_w ..
+cmake .. -DPICO_BOARD=pico_w
 make -j4 ble_control
 ```
 
@@ -156,7 +156,7 @@ In this example project, the Raspberry Pi Pico controls the relay 1 of the Dual 
 ### Compilation
 
 ```bash
-cmake -DPICO_BOARD=pico_w ..
+cmake .. -DPICO_BOARD=pico_w
 make -j4 relay_control
 ```
 

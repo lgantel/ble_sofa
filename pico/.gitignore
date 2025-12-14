@@ -1,6 +1,7 @@
 # Ignore installation directories
 pico-examples
 pico-sdk
+picotool
 
 # Ignore temporary and auto-generated directories
 .vscode

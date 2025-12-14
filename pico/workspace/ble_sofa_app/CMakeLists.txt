@@ -17,17 +17,29 @@ add_executable(${PROJECT}
   ${PROJECT}.c 
 )
 
+# Set custom linker script
+pico_set_linker_script(${PROJECT} ${CMAKE_SOURCE_DIR}/lscript/memmap_custom.ld)
+
+# Set link flags
+set_property(TARGET ${PROJECT} APPEND_STRING PROPERTY LINK_FLAGS "-Wl,--print-memory-usage")
+
 # Pull in dependencies
 include_directories(${CMAKE_SOURCE_DIR}/lib/relay/inc)
 include_directories(${CMAKE_SOURCE_DIR}/lib/ssd1306/inc)
 
-target_link_libraries(${PROJECT}  
+target_link_libraries(${PROJECT} PRIVATE
+  pico_async_context_freertos
+  FreeRTOS-Kernel-Heap4
   pico_stdlib
   pico_btstack_ble
   pico_btstack_cyw43
   pico_cyw43_arch_none
   relay
   ssd1306
+)
+
+target_compile_definitions(${PROJECT} PRIVATE
+    configNUMBER_OF_CORES=1
 )
 
 # Add include files

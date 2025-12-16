@@ -262,6 +262,11 @@ SECTIONS
         PROVIDE(__flash_binary_end = .);
     } > FLASH
 
+    /* Custom persistent storage area */
+    .section_persistent : {
+        "ADDR_PERSISTENT" = .;
+    } > FLASH_PERSISTENT
+
     /* stack limit is poorly named, but historically is maximum heap ptr */
     __StackLimit = ORIGIN(RAM) + LENGTH(RAM);
     __StackOneTop = ORIGIN(SCRATCH_X) + LENGTH(SCRATCH_X);

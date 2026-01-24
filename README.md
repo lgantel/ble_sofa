@@ -155,6 +155,20 @@ https://punchthrough.com/android-ble-guide/
 
 https://mcuoneclipse.com/2023/03/19/ble-with-wifi-and-freertos-on-raspberry-pi-pico-w/
 
+## Pico W Web Server
+
+* https://github.com/krzmaz/pico-w-webserver-example
+* https://github.com/carlk3/FreeRTOS-FAT-CLI-for-RPi-Pico/tree/master/examples/wifi_httpd
+* https://www.hackster.io/rajivcodelab/how-to-build-a-rest-api-on-raspberry-pi-pico-w-control-led-91b25b
+
+- Rest API client:
+
+https://stackoverflow.com/questions/72252577/what-is-the-simplest-way-to-make-a-post-request-in-kotlin-for-android-app
+
+```bash
+curl -X POST "http://192.168.1.31:80/api/control-led" -d '{"led": 0}' -H 'Content-Type: application/json'
+```
+
 ## Flash Storage
 
 * Tutorial on how to modify linker script to reserve a flash memory block for persistent storage:

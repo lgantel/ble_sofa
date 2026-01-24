@@ -15,33 +15,41 @@
 -- File Name: ble_sofa_app.c
 -- Description: Relays control via BLE to turn on/off two 29V DC sofa motors
 --
--- Last update: 2025-12-14
+-- Last update: 2025-12-23
 --
 -------------------------------------------------------------------------------*/
 
 #include <stdio.h>
+#include <stddef.h>
 
+#include "lwip/apps/httpd.h"
+#include "lwip/apps/fs.h"
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
-
-#include "btstack_run_loop.h"
-#include "btstack_event.h"
 #include "pico/cyw43_arch.h"
-#include "pico/btstack_cyw43.h"
-#include "btstack.h"
-#include "ble/gatt-service/nordic_spp_service_server.h"
-#include "mygatt.h"
 
+#include "hw_mgmt.h"
 #include "flash_utils.h"
 #include "relay.h"
 #include "ssd1306.h"
 
+#if 0
+#include "ble_utils.h"
+#endif
+
 #include "FreeRTOS.h"
 #include "task.h"
+#include "pico_error_str.h"
+
+// for #define's that configure lwIP stack (enable what we need and not more)
+#include "lwipopts.h"
 
 //----------------------------------------------------------------
 // Constants
 //----------------------------------------------------------------
+
+/** @brief Software version */
+#define SW_VERSION  "0.1.0"
 
 // Which core to run on if configNUMBER_OF_CORES==1
 #ifndef RUN_FREE_RTOS_ON_CORE
@@ -57,228 +65,45 @@
 #define LED_DELAY_MS 500
 
 // Priorities of our threads - higher numbers are higher priority
-#define MAIN_TASK_PRIORITY      ( tskIDLE_PRIORITY + 2UL )
-#define BLINK_TASK_PRIORITY     ( tskIDLE_PRIORITY + 1UL )
+#define MAIN_TASK_PRIORITY      ( tskIDLE_PRIORITY + 1UL )
+#define BLINK_TASK_PRIORITY     ( tskIDLE_PRIORITY + 2UL )
 #define WORKER_TASK_PRIORITY    ( tskIDLE_PRIORITY + 4UL )
 
 // Stack sizes of our threads in words (4 bytes)
-#define MAIN_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
+#define MAIN_TASK_STACK_SIZE 1024
 #define BLINK_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
 #define WORKER_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
 
-#define WL_LED_GPIO       0
 #define LED_GPIO          2
 
-#define RELAY1_GPIO       7
-#define RELAY2_GPIO       6
-
-#define I2C_SDA_GPIO      16
-#define I2C_SCL_GPIO      17
-
-// SSD1306 I2C 7-bit address
-#define SSD1306_I2C_ADDR  0x3C
-
+//----------------------------------------------------------------
 // Global variables
+//----------------------------------------------------------------
 
 /** @brief Structure to control Relay1 */
-relay_t relay1;
+extern relay_t relay1;
 
 /** @brief Structure to control Relay2 */
-relay_t relay2;
+extern relay_t relay2;
 
 /** @brief Structure to control SSD1306 OLED display */
-ssd1306_t ssd1306;
+extern ssd1306_t ssd1306;
 
-//----------------------------------------------------------------------------------
-// Bluetooth variables
-//----------------------------------------------------------------------------------
-
-#define REPORT_INTERVAL_MS 3000
-#define MAX_NR_CONNECTIONS 3 
-
-/** @brief LED Command characteristic */
-#define ATT_CHARACTERISTIC_0000FF11_VALUE_HANDLE 0x0006
-
+#if 0
 /** @brief Advertisements information */
-const uint8_t adv_data[] = {
-    2, BLUETOOTH_DATA_TYPE_FLAGS, 0x06, 
-    9, BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME, 'b', 'l', 'e','-', 's', 'o', 'f', 'a',
-    // Incomplete List of 16-bit Service Class UUIDs -- FF10 - only valid for testing!
-    3, BLUETOOTH_DATA_TYPE_INCOMPLETE_LIST_OF_16_BIT_SERVICE_CLASS_UUIDS, 0x10, 0xff,
-};
-const uint8_t adv_data_len = sizeof(adv_data);
+extern uint8_t adv_data[];
+extern uint8_t adv_data_len;
 
-/** @brief HCI registration callback */
-static btstack_packet_callback_registration_t hci_event_callback_registration;
+/** @brief Relay register */
+extern uint8_t bu_relay_reg;
+extern int bu_relay_reg_len;
 
-// Data: command the relays status:
-//   - bit [0]: '0' = Relay1 OFF, '1' = Relay1 ON
-//   - bit [1]: '0' = Relay2 OFF, '1' = Relay2 ON
-static uint8_t data = 0x00;
-static int data_len = 1; // Data length in byte
+/** @brief BLE connection status */
+extern bool bu_ble_connected;
+#endif
 
-//----------------------------------------------------------------------------------
-// Bluetooth static functions
-//----------------------------------------------------------------------------------
-
-// Prototypes
-static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
-static uint16_t att_read_callback(hci_con_handle_t con_handle, uint16_t att_handle, uint16_t offset, uint8_t * buffer, uint16_t buffer_size);
-static int att_write_callback(hci_con_handle_t con_handle, uint16_t att_handle, uint16_t transaction_mode, uint16_t offset, uint8_t *buffer, uint16_t buffer_size);
-static void att_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
-
-/**
- * @brief Host Controller Interface (HCI) Packet Handler
- * 
- * @param packet_type 
- * @param channel 
- * @param packet 
- * @param size 
- */
-static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
-  UNUSED(channel);
-  UNUSED(size);
-
-  //uint16_t conn_interval;
-  hci_con_handle_t con_handle;
-
-  if (packet_type != HCI_EVENT_PACKET) { return; }
-
-  switch (hci_event_packet_get_type(packet)) {
-    case BTSTACK_EVENT_STATE:
-      // BTstack activated, get started
-      if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING) {
-        //printf("> BLE Control - BTstack activated\n");
-      }
-      break;
-    case HCI_EVENT_LE_META:
-      switch (hci_event_le_meta_get_subevent_code(packet)) {
-        case HCI_SUBEVENT_LE_CONNECTION_COMPLETE:
-          // Print connection parameters (without using float operations)
-          con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
-          //conn_interval = hci_subevent_le_connection_complete_get_conn_interval(packet);
-          //printf("LE Connection - Connection Interval: %u.%02u ms\n", conn_interval * 125 / 100, 25 * (conn_interval & 3));
-          //printf("LE Connection - Connection Latency: %u\n", hci_subevent_le_connection_complete_get_conn_latency(packet));
-
-          // Request min con_interval 15ms for iOS 11+
-          //printf("LE Connection - Request 15 ms connection interval\n");
-          gap_request_connection_parameter_update(con_handle, 12, 12, 0, 0x0048);
-          break;
-        case HCI_SUBEVENT_LE_CONNECTION_UPDATE_COMPLETE:
-          // Print connection parameters (without using floating point operations)
-          con_handle    = hci_subevent_le_connection_update_complete_get_connection_handle(packet);
-          //conn_interval = hci_subevent_le_connection_update_complete_get_conn_interval(packet);
-          //printf("LE Connection - Connection Param update - connection interval %u.%02u ms, latency %u\n", 
-          //          conn_interval * 125 / 100,
-          //          25 * (conn_interval & 3), hci_subevent_le_connection_update_complete_get_conn_latency(packet));
-          break;
-        default:
-          break;
-      }
-      break;
-    default:
-      break;
-  }
-}
-
-/**
- * @brief ATT client read callback
- * 
- * @param connection_handle 
- * @param att_handle 
- * @param offset 
- * @param buffer 
- * @param buffer_size 
- * @return uint16_t 
- */
-static uint16_t att_read_callback(hci_con_handle_t connection_handle, uint16_t att_handle, uint16_t offset, uint8_t * buffer, uint16_t buffer_size){
-    UNUSED(connection_handle);
-
-    //printf("> att_read_callback: att_handle %04x, offset %04x, buff size %04x\n", att_handle, offset, buffer_size);
-
-    if (att_handle == ATT_CHARACTERISTIC_0000FF11_VALUE_HANDLE) {
-        return att_read_callback_handle_blob((const uint8_t *)&data, data_len, offset, buffer, buffer_size);
-    }
-
-    return 0;
-}
-
-/**
- * @brief ATT client write callback
- * 
- * @param connection_handle 
- * @param att_handle 
- * @param transaction_mode 
- * @param offset 
- * @param buffer 
- * @param buffer_size 
- * @return int 
- */
-static int att_write_callback(hci_con_handle_t connection_handle, uint16_t att_handle, uint16_t transaction_mode, uint16_t offset, uint8_t *buffer, uint16_t buffer_size){
-    UNUSED(connection_handle);
-    UNUSED(transaction_mode);
-    UNUSED(offset);
-    UNUSED(buffer_size);
-
-    //printf("> att_write_callback: att_handle %04x, offset %04x, buff size %04x\n", att_handle, offset, buffer_size);
-    if ((buffer == NULL) || (att_handle != ATT_CHARACTERISTIC_0000FF11_VALUE_HANDLE)) { return 0; }
-
-    // Update data
-    data = *buffer;
-    //printf("> Update data\t- data = %02x\n", data);
-
-    // Process data
-    // - Bit [0] is used to set Relay1 on/off
-    if (data & 0x01) { 
-      ssd1306_write_str(&ssd1306, "-- Relay 1 ON   ", 1);
-      ssd1306_write_str(&ssd1306, "-- Relay 2 OFF  ", 2);
-      relay_on(&relay1);
-      relay_off(&relay2);
-    // - Bit [1] is used to set Relay2 on/off
-    } else if (data & 0x02) { 
-      ssd1306_write_str(&ssd1306, "-- Relay 1 OFF  ", 1);
-      ssd1306_write_str(&ssd1306, "-- Relay 2 ON   ", 2);
-      relay_off(&relay1);
-      relay_on(&relay2);
-    } else { 
-      ssd1306_write_str(&ssd1306, "-- Relay 1 OFF  ", 1);
-      ssd1306_write_str(&ssd1306, "-- Relay 2 OFF  ", 2);
-      relay_off(&relay1);
-      relay_off(&relay2);
-    }
-    
-    return 0;
-}
-
-/**
- * @brief Attribute Protocol (ATT) Packet Handler
- * 
- * @param packet_type 
- * @param channel 
- * @param packet 
- * @param size 
- */
-static void att_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
-  UNUSED(channel);
-  UNUSED(size);
-    
-  if (packet_type != HCI_EVENT_PACKET) return;
-
-  switch (hci_event_packet_get_type(packet)) {
-    case ATT_EVENT_CONNECTED:
-      ssd1306_write_str(&ssd1306, "-- Connected    ", 1);
-      ssd1306_write_str(&ssd1306, "                ", 2);
-      //printf("Connected\n");
-      break;
-    case ATT_EVENT_DISCONNECTED:
-      ssd1306_write_str(&ssd1306, "-- Disconnected ", 1);
-      ssd1306_write_str(&ssd1306, "                ", 2);
-      //printf("Disconnected\n");
-      break;
-    default:
-      break;
-  }
-}
+extern uint32_t ADDR_PERSISTENT[];
+#define ADDR_PERSISTENT_BASE_ADDR (ADDR_PERSISTENT)
 
 //----------------------------------------------------------------
 // FreeRTOS Static Functions
@@ -310,6 +135,39 @@ static void pico_init_led(void) {
 }
 #endif
 
+#if 0
+static void process_ble_connection(void) {
+  if (bu_ble_connected) {
+    ssd1306_write_str(&ssd1306, "-- Connected    ", 0);
+  }
+  else {
+    ssd1306_write_str(&ssd1306, "-- Disconnected ", 0);
+  } 
+}
+
+static void process_relays(void) {
+  // Process relay_reg
+  // - Bit [0] is used to set Relay1 on/off
+  if (bu_relay_reg & 0x01) { 
+    ssd1306_write_str(&ssd1306, "-- Relay 1 ON   ", 1);
+    ssd1306_write_str(&ssd1306, "-- Relay 2 OFF  ", 2);
+    relay_on(&relay1);
+    relay_off(&relay2);
+  // - Bit [1] is used to set Relay2 on/off
+  } else if (bu_relay_reg & 0x02) { 
+    ssd1306_write_str(&ssd1306, "-- Relay 1 OFF  ", 1);
+    ssd1306_write_str(&ssd1306, "-- Relay 2 ON   ", 2);
+    relay_off(&relay1);
+    relay_on(&relay2);
+  } else { 
+    ssd1306_write_str(&ssd1306, "-- Relay 1 OFF  ", 1);
+    ssd1306_write_str(&ssd1306, "-- Relay 2 OFF  ", 2);
+    relay_off(&relay1);
+    relay_off(&relay2);
+  }
+}
+#endif
+
 //----------------------------------------------------------------
 // Functions
 //----------------------------------------------------------------
@@ -337,37 +195,109 @@ void blink_task(void *params) {
 
 #if 0
 // async workers run in their own thread when using async_context_freertos_t with priority WORKER_TASK_PRIORITY
-static void do_work(async_context_t *context, async_at_time_worker_t *worker) {
+static void run_server(async_context_t *context, async_at_time_worker_t *worker) {
     async_context_add_at_time_worker_in_ms(context, worker, 10000);
     static uint32_t count = 0;
 }
-async_at_time_worker_t worker_timeout = { .do_work = do_work };
+async_at_time_worker_t worker_timeout = { .do_work = run_server };
 #endif
+
+static const char *cgi_handler_test(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]) {
+  printf("cgi_handler_test\n");
+  printf("iIndex: %d\n", iIndex);
+  printf("iNumParams: %d\n", iNumParams);
+  for (int i = 0; i < iNumParams; i++) {
+    printf("pcParam[%d]: %s\n", i, pcParam[i]);  
+  }
+  
+  if (iNumParams > 0) {
+    if (strcmp(pcParam[0], "test") == 0) {
+      return "/test.shtml";
+    }
+  }
+  return "/index.html";
+}
+
+static tCGI cgi_handlers[] = {
+  { "/", cgi_handler_test },
+  { "/index.html", cgi_handler_test },
+};
+
+static const char *ssi_tags[] = {
+  "status",
+  "welcome"
+};
+
+// Note that the buffer size is limited by LWIP_HTTPD_MAX_TAG_INSERT_LEN, so use LWIP_HTTPD_SSI_MULTIPART to return larger amounts of data
+u16_t ssi_example_ssi_handler(int iIndex, char *pcInsert, int iInsertLen) {
+  size_t printed;
+
+  switch (iIndex) {
+    case 0: { // "status"
+      printed = snprintf(pcInsert, iInsertLen, "Pass");
+      break;
+    }
+    case 1: { // "welcome"
+      printed = snprintf(pcInsert, iInsertLen, "Hello from Pico");
+      break;
+    }
+    default: { // unknown tag
+      printed = 0;
+      break;
+    }
+  }
+
+  return (u16_t) printed;
+}
 
 /**
  * @brief FreeRTOS task: Main task
  */
-void main_task(void *params) {
-  char buf[17];
-  uint32_t count = 0;
+void main_task(__unused void *params) {
+  //char buf[17];
+  //uint32_t count = 0;
   //async_context_t *context = example_async_context();
   // start the worker running
   //async_context_add_at_time_worker_in_ms(context, &worker_timeout, 0);
 
-#if USE_LED
-  // start the led blinking
-  xTaskCreate(blink_task, "BlinkThread", BLINK_TASK_STACK_SIZE, NULL, BLINK_TASK_PRIORITY, NULL);
-#endif
+  // Initialize the WiFi
+  cyw43_arch_init();
+  printf("WiFi initialized\n");
 
-  while(true) {
-    snprintf(buf, sizeof(buf), "Worker: cnt=%03u ", count++);
-    ssd1306_write_str(&ssd1306, buf, 1);
+  // Enable station mode
+  cyw43_arch_enable_sta_mode();
 
-    vTaskDelay(3000);
-  }
+  // this seems to be the best we can do using the predefined `cyw43_pm_value` macro:
+  // cyw43_wifi_pm(&cyw43_state, CYW43_PERFORMANCE_PM);
+  // however it doesn't use the `CYW43_NO_POWERSAVE_MODE` value, so we do this instead:
+  cyw43_wifi_pm(&cyw43_state, cyw43_pm_value(CYW43_NO_POWERSAVE_MODE, 20, 1, 1, 1));
+
+  int err;
+  do {
+    printf("> Attempt to connect to WiFi %s...\n", WIFI_SSID);
+    err = cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000);
+    if (err != PICO_OK) {
+      printf("# Failed to connect (%s)\n", pico_error_str(err));
+      vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+  } while(err != PICO_OK);
+  printf("> WiFi connected\n");
+
+  // Initialize the web server
+  cyw43_arch_lwip_begin();
+  httpd_init();
+  http_set_cgi_handlers(cgi_handlers, LWIP_ARRAYSIZE(cgi_handlers));
+  http_set_ssi_handler(ssi_example_ssi_handler, ssi_tags, LWIP_ARRAYSIZE(ssi_tags));
+  cyw43_arch_lwip_end();
+  printf("> HTTP server initialized\n");
+
+  printf("\nListening at %s\n", ip4addr_ntoa(netif_ip4_addr(netif_list)));
+  vTaskDelete(NULL);
+
   //async_context_deinit(context);
 }
 
+#if 0
 void vLaunch( void) {
     TaskHandle_t task;
     xTaskCreate(main_task, "MainThread", MAIN_TASK_STACK_SIZE, NULL, MAIN_TASK_PRIORITY, &task);
@@ -380,10 +310,7 @@ void vLaunch( void) {
     /* Start the tasks and timer running. */
     vTaskStartScheduler();
 }
-
-
-extern uint32_t ADDR_PERSISTENT[];
-#define ADDR_PERSISTENT_BASE_ADDR (ADDR_PERSISTENT)
+#endif
 
 /**
  * @brief Main entry point
@@ -391,50 +318,28 @@ extern uint32_t ADDR_PERSISTENT[];
  */
 int main(void)
 {
-    char buf[17] = {0x00};
-    uint32_t * p_persistent = fu_get_addr_persistent();
+  stdio_init_all();
 
-    // Initialize the relays output
-    relay_init(&relay1, RELAY1_GPIO);
-    relay_init(&relay2, RELAY2_GPIO);
+  // Initialize the hardware components
+  hw_init();
 
-    // Turn off relay 1
-    relay_off(&relay1);
-    // Turn off relay 2
-    relay_off(&relay2);
+  // Wait a moment
+  sleep_ms(1000);
 
-    // Initialize the OLED display
-    ssd1306_i2c_init(&ssd1306, 
-      i2c0, 
-      SSD1306_I2C_ADDR, 
-      100 * 1000, // 100 kHz
-      I2C_SCL_GPIO,
-      I2C_SDA_GPIO
-    );
+  printf("\n-- BLE Sofa App --\n");
+  printf("-- Version: %s\n\n", SW_VERSION);
 
-    // Power-on OLED display
-    ssd1306_poweron(&ssd1306);
-    ssd1306_write_str(&ssd1306, "--  Power-On  --", 1);
+  xTaskCreate(main_task, "MainThread", MAIN_TASK_STACK_SIZE, NULL, MAIN_TASK_PRIORITY, NULL);
+  vTaskStartScheduler();
 
-    snprintf(buf, 16, "0x%08x        ", ADDR_PERSISTENT_BASE_ADDR);
-    ssd1306_write_str(&ssd1306, buf, 2);
+  //char buf[17] = {0x00};
+  //uint32_t * p_persistent = fu_get_addr_persistent();
 
-    // Wait a moment
-    sleep_ms(1000);
+  //ssd1306_write_str(&ssd1306, "> Hw Init       ", 1);
 
   #if 0
-    // Initialize the Bluetooth stack
-    if (cyw43_arch_init()) return -1;
-
-    // Turn off the wireless LED
-    cyw43_arch_gpio_put(WL_LED_GPIO, false);
-
-    // Initialize the Logical Link Control and Adaptation Layer Protocol (L2CAP) layer
-    l2cap_init();
-    // Initialize Security Manager (SM)
-    sm_init();
-    // Initialize Attribute Protocol
-    att_server_init(profile_data, att_read_callback, att_write_callback);
+    // Initialize the BLE stack
+    btstack_init();
 
     // Setup advertisements
     uint16_t adv_int_min = 0x0030;
@@ -454,8 +359,8 @@ int main(void)
     att_server_register_packet_handler(att_packet_handler);
 
     // Initialize data
-    data = 0x00;
-    data_len = 1;
+    bu_relay_reg = 0x00;
+    bu_relay_reg_len = 1;
 
     hci_power_control(HCI_POWER_ON);
 
@@ -465,13 +370,15 @@ int main(void)
     ssd1306_write_str(&ssd1306, "--Bluetooth On--", 1);
 
     // Endless loop
-    btstack_run_loop_execute();
+    //btstack_run_loop_execute();
+    while (1) {
+      process_ble_connection();
+      process_relays();
+    }
 #endif
 
-    vLaunch();
-
-    // Power-off OLED display
-    ssd1306_poweroff(&ssd1306);
+    // Deinitialize the hardware components
+    hw_deinit();
 
     return 0;
 }

@@ -15,9 +15,12 @@
 -- File Name: relay.h
 -- Description: Control relay through GPIO
 --
--- Last update: 2023-07-09
+-- Last update: 2025-12-17
 --
 -------------------------------------------------------------------------------*/
+
+#ifndef RELAY_H
+#define RELAY_H
 
 #include "hardware/gpio.h"
 
@@ -54,3 +57,5 @@ void relay_on(relay_t * relay);
  * @param relay The relay structure
  */
 void relay_off(relay_t * relay);
+
+#endif // RELAY_H
